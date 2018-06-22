@@ -28,7 +28,7 @@ SOFTWARE.
 */
 
 // Package jsmin implements JavaScript minifier. It's a direct port of Doulas Crockford's JSMin.
-package jsmin
+package main
 
 // ... or should I say, a direct braindead port of the ugly Crockford's code...
 
@@ -38,6 +38,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 )
 
 const eof = -1
@@ -353,4 +354,40 @@ func Minify(script []byte) (minified []byte, err error) {
 		minified = minified[1:]
 	}
 	return minified, nil
+}
+
+// Minify returns a minified script or an error.
+func MinifyPipeline(r *bufio.Reader, w *bufio.Writer) error {
+	m := new(minifier)
+	m.init(r, w)
+	m.run()
+	if m.err != nil {
+		return m.err
+	}
+	w.Flush()
+	return nil
+}
+
+func main() {
+	info, err := os.Stdin.Stat()
+	if err != nil {
+		panic(err)
+	}
+
+	if info.Mode()&os.ModeCharDevice != 0 || info.Size() <= 0 {
+		fmt.Println("The command is intended to work with pipes.")
+		fmt.Println("Usage: cat sample.js | jsmin > simple.min.js")
+		os.Exit(0)
+		return
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+	writer := bufio.NewWriter(os.Stdout)
+
+	err = MinifyPipeline(reader, writer)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(-1)
+		return
+	}
 }
