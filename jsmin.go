@@ -374,9 +374,9 @@ func main() {
 		panic(err)
 	}
 
-	if info.Mode()&os.ModeCharDevice != 0 || info.Size() <= 0 {
+	if (info.Mode() & os.ModeCharDevice) == os.ModeCharDevice {
 		fmt.Println("The command is intended to work with pipes.")
-		fmt.Println("Usage: cat sample.js | jsmin > simple.min.js")
+		fmt.Println("Usage: cat sample.js | jsmin > sample.min.js")
 		os.Exit(0)
 		return
 	}
